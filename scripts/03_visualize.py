@@ -18,12 +18,48 @@ RESULTS.mkdir(exist_ok=True, parents=True)
 plt.switch_backend('Agg')
 
 
+def extract_condition_from_filename(filepath):
+    """
+    Extract condition name from evoked file path.
+    
+    Expected filename format: [subject_]condition_ave.fif
+    Examples:
+        - 'auditory_left_ave.fif' -> 'auditory_left'
+        - 'subject01_auditory_left_ave.fif' -> 'auditory_left'
+        - 'sub01_visual_right_ave.fif' -> 'visual_right'
+    
+    Args:
+        filepath: Path object for the evoked file
+        
+    Returns:
+        str: Condition name extracted from filename
+    """
+    # Remove _ave suffix
+    name = filepath.stem.replace('_ave', '')
+    
+    # Split by underscore
+    parts = name.split('_')
+    
+    # If filename starts with common subject prefixes, skip them
+    # Otherwise, use all parts as condition name
+    if len(parts) > 1 and (parts[0].startswith('sub') or 
+                           parts[0].startswith('subj') or 
+                           parts[0].lower().startswith('s') and parts[0][1:].isdigit()):
+        # Skip subject prefix, use rest as condition
+        condition = '_'.join(parts[1:])
+    else:
+        # Use entire name as condition
+        condition = name
+    
+    return condition
+
+
 def plot_evoked_responses(evoked_files):
     """
     Create plots of evoked responses.
     
-    Expected filename format: <subject>_<condition>_ave.fif
-    Example: subject01_auditory_left_ave.fif
+    Expected filename format: [subject_]condition_ave.fif
+    Example: subject01_auditory_left_ave.fif or auditory_left_ave.fif
     """
     print(f"\n{'='*60}")
     print("Plotting evoked responses")
@@ -34,14 +70,11 @@ def plot_evoked_responses(evoked_files):
     for evoked_file in evoked_files:
         try:
             evoked = mne.read_evokeds(evoked_file)[0]
-            # Extract condition from filename (remove subject prefix and _ave.fif suffix)
-            # Assumes format: subjectXX_condition_ave.fif
-            filename_parts = evoked_file.stem.replace('_ave', '').split('_')
-            if len(filename_parts) >= 2:
-                # Use the last parts as condition name (skip subject ID)
-                condition_name = '_'.join(filename_parts[1:])
-            else:
-                condition_name = evoked_file.stem.replace('_ave', '')
+            condition_name = extract_condition_from_filename(evoked_file)
+            
+            if not condition_name:
+                print(f"⚠ Warning: Could not extract condition from {evoked_file.name}, skipping...")
+                continue
             
             if condition_name not in evoked_by_condition:
                 evoked_by_condition[condition_name] = []
@@ -119,11 +152,16 @@ def compare_conditions(evoked_files):
     evokeds = []
     labels = []
     for evoked_file in evoked_files:
-        evoked = mne.read_evokeds(evoked_file)[0]
-        evokeds.append(evoked)
-        # Extract condition name from filename
-        condition = evoked_file.stem.split('_')[-2:]
-        labels.append('_'.join(condition).replace('_ave', ''))
+        try:
+            evoked = mne.read_evokeds(evoked_file)[0]
+            condition_name = extract_condition_from_filename(evoked_file)
+            
+            if condition_name:
+                evokeds.append(evoked)
+                labels.append(condition_name)
+        except Exception as e:
+            print(f"⚠ Warning: Could not load {evoked_file.name}: {e}")
+            continue
     
     if len(evokeds) > 1:
         # Compare all conditions
