@@ -1,0 +1,31 @@
+[project]
+name = "eeg-analysis-1"
+version = "0.1.0"
+description = "Template repository for EEG analysis with MNE-Python"
+authors = ["nickdelgrosso"]
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
+
+[dependencies]
+python = ">=3.10,<3.13"
+mne = ">=1.6.0"
+numpy = ">=1.24.0"
+scipy = ">=1.10.0"
+matplotlib = ">=3.7.0"
+pandas = ">=2.0.0"
+jupyter = ">=1.0.0"
+ipykernel = ">=6.0.0"
+seaborn = ">=0.12.0"
+
+[tasks]
+# Data processing tasks
+preprocess = "python scripts/01_preprocess.py"
+analyze = "python scripts/02_analyze.py"
+visualize = "python scripts/03_visualize.py"
+
+# Run the full pipeline
+pipeline = { depends_on = ["preprocess", "analyze", "visualize"] }
+
+# Launch Jupyter
+notebook = "jupyter notebook"
+lab = "jupyter lab"
