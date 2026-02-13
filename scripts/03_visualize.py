@@ -21,21 +21,34 @@ plt.switch_backend('Agg')
 def plot_evoked_responses(evoked_files):
     """
     Create plots of evoked responses.
+    
+    Expected filename format: <subject>_<condition>_ave.fif
+    Example: subject01_auditory_left_ave.fif
     """
     print(f"\n{'='*60}")
     print("Plotting evoked responses")
     print(f"{'='*60}\n")
     
-    # Group files by subject/session
+    # Group files by condition
     evoked_by_condition = {}
     for evoked_file in evoked_files:
-        evoked = mne.read_evokeds(evoked_file)[0]
-        condition = evoked_file.stem.split('_')[-2:]  # Extract condition from filename
-        condition_name = '_'.join(condition).replace('_ave', '')
-        
-        if condition_name not in evoked_by_condition:
-            evoked_by_condition[condition_name] = []
-        evoked_by_condition[condition_name].append(evoked)
+        try:
+            evoked = mne.read_evokeds(evoked_file)[0]
+            # Extract condition from filename (remove subject prefix and _ave.fif suffix)
+            # Assumes format: subjectXX_condition_ave.fif
+            filename_parts = evoked_file.stem.replace('_ave', '').split('_')
+            if len(filename_parts) >= 2:
+                # Use the last parts as condition name (skip subject ID)
+                condition_name = '_'.join(filename_parts[1:])
+            else:
+                condition_name = evoked_file.stem.replace('_ave', '')
+            
+            if condition_name not in evoked_by_condition:
+                evoked_by_condition[condition_name] = []
+            evoked_by_condition[condition_name].append(evoked)
+        except Exception as e:
+            print(f"⚠ Warning: Could not process {evoked_file.name}: {e}")
+            continue
     
     # Plot each condition
     for condition, evokeds in evoked_by_condition.items():

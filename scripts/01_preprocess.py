@@ -14,6 +14,28 @@ DATA_RAW = Path("data/raw")
 DATA_INTERIM = Path("data/interim")
 DATA_INTERIM.mkdir(exist_ok=True, parents=True)
 
+# ============================================================================
+# CONFIGURATION - MODIFY THESE FOR YOUR DATA
+# ============================================================================
+
+# Filter parameters
+FILTER_L_FREQ = 0.5   # High-pass filter frequency (Hz)
+FILTER_H_FREQ = 40.0  # Low-pass filter frequency (Hz)
+
+# Channel montage - change to match your electrode setup
+# Options: 'standard_1020', 'standard_1005', 'biosemi64', etc.
+# See: https://mne.tools/stable/generated/mne.channels.make_standard_montage.html
+MONTAGE_NAME = 'standard_1020'
+
+# Re-referencing method
+# Options: 'average', ['M1', 'M2'] (for specific channels), etc.
+REFERENCE_METHOD = 'average'
+
+# Bad channels (if known) - add channel names here
+BAD_CHANNELS = []  # Example: ['Fp1', 'Fp2']
+
+# ============================================================================
+
 
 def preprocess_eeg(raw_file):
     """
@@ -35,21 +57,23 @@ def preprocess_eeg(raw_file):
     print("Loading raw data...")
     raw = mne.io.read_raw_fif(raw_file, preload=True)
     
-    # Set montage (example: standard 10-20 system)
-    print("Setting montage...")
-    montage = mne.channels.make_standard_montage('standard_1020')
+    # Set montage
+    print(f"Setting montage: {MONTAGE_NAME}")
+    montage = mne.channels.make_standard_montage(MONTAGE_NAME)
     raw.set_montage(montage, on_missing='warn')
     
-    # Filter data (bandpass 0.5-40 Hz)
-    print("Filtering data (0.5-40 Hz)...")
-    raw.filter(l_freq=0.5, h_freq=40.0, fir_design='firwin')
+    # Filter data
+    print(f"Filtering data ({FILTER_L_FREQ}-{FILTER_H_FREQ} Hz)...")
+    raw.filter(l_freq=FILTER_L_FREQ, h_freq=FILTER_H_FREQ, fir_design='firwin')
     
-    # Optionally mark bad channels (manual or automatic)
-    # raw.info['bads'] = ['Fp1', 'Fp2']  # Example
+    # Mark bad channels
+    if BAD_CHANNELS:
+        print(f"Marking bad channels: {BAD_CHANNELS}")
+        raw.info['bads'] = BAD_CHANNELS
     
-    # Re-reference to average
-    print("Re-referencing to average...")
-    raw.set_eeg_reference('average', projection=False)
+    # Re-reference
+    print(f"Re-referencing to: {REFERENCE_METHOD}")
+    raw.set_eeg_reference(REFERENCE_METHOD, projection=False)
     
     # Save interim data
     output_file = DATA_INTERIM / f"{raw_file.stem}_preprocessed.fif"

@@ -14,6 +14,34 @@ DATA_INTERIM = Path("data/interim")
 DATA_PROCESSED = Path("data/processed")
 DATA_PROCESSED.mkdir(exist_ok=True, parents=True)
 
+# ============================================================================
+# CONFIGURATION - MODIFY THESE FOR YOUR DATA
+# ============================================================================
+
+# Stimulus channel name - change this to match your data
+# Common names: 'STI 014' (MNE sample), 'Status' (BrainVision), 'STI' (generic)
+STIM_CHANNEL = 'STI 014'
+
+# Event IDs - MODIFY THESE TO MATCH YOUR EXPERIMENT
+# These are example values from the MNE sample dataset
+# Replace with your actual event codes/triggers
+EVENT_ID = {
+    'auditory/left': 1,
+    'auditory/right': 2,
+    'visual/left': 3,
+    'visual/right': 4
+}
+
+# Epoch parameters
+EPOCH_TMIN = -0.2  # Start time before event (in seconds)
+EPOCH_TMAX = 0.5   # End time after event (in seconds)
+BASELINE = (None, 0)  # Baseline period (None means from start)
+
+# Artifact rejection threshold (in microvolts)
+REJECT_THRESHOLD = 100e-6  # 100 µV
+
+# ============================================================================
+
 
 def create_epochs(raw_file):
     """
@@ -35,29 +63,27 @@ def create_epochs(raw_file):
     print("Loading preprocessed data...")
     raw = mne.io.read_raw_fif(raw_file, preload=True)
     
-    # Find events (this is dataset-specific)
-    print("Finding events...")
-    events = mne.find_events(raw, stim_channel='STI 014', min_duration=0.002)
-    
-    # Define event IDs (example)
-    event_id = {
-        'auditory/left': 1,
-        'auditory/right': 2,
-        'visual/left': 3,
-        'visual/right': 4
-    }
+    # Find events
+    print(f"Finding events from stimulus channel: {STIM_CHANNEL}")
+    try:
+        events = mne.find_events(raw, stim_channel=STIM_CHANNEL, min_duration=0.002)
+    except ValueError as e:
+        print(f"✗ Error: Could not find stimulus channel '{STIM_CHANNEL}'")
+        print(f"  Available channels: {raw.ch_names}")
+        raise
     
     # Create epochs
-    print("Creating epochs...")
+    print(f"Creating epochs (tmin={EPOCH_TMIN}, tmax={EPOCH_TMAX})...")
+    print(f"Using event IDs: {EVENT_ID}")
     epochs = mne.Epochs(
         raw, 
         events, 
-        event_id=event_id,
-        tmin=-0.2, 
-        tmax=0.5,
-        baseline=(None, 0),
+        event_id=EVENT_ID,
+        tmin=EPOCH_TMIN, 
+        tmax=EPOCH_TMAX,
+        baseline=BASELINE,
         preload=True,
-        reject=dict(eeg=100e-6),  # Reject epochs with amplitude > 100 µV
+        reject=dict(eeg=REJECT_THRESHOLD),
         reject_by_annotation=True
     )
     
