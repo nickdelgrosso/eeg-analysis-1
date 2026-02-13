@@ -1,0 +1,75 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Pixi
+.pixi/
+pixi.lock
+
+# Data files (large binary files should not be in git)
+data/raw/*.fif
+data/raw/*.edf
+data/raw/*.bdf
+data/raw/*.vhdr
+data/raw/*.vmrk
+data/raw/*.eeg
+data/raw/*.set
+data/interim/*.fif
+data/processed/*.fif
+
+# Scratch folders (personal work areas)
+scratch/*
+!scratch/README.md
+!scratch/me/
+!scratch/Sangyeob/
+
+# Results (optional - you may want to commit some results)
+# Uncomment the following if you don't want to commit results
+# results/*.png
+# results/*.jpg
+# results/*.pdf
+
+# Temporary files
+*.tmp
+*.bak
+.cache/
